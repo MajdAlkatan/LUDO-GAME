@@ -42,4 +42,8 @@ export class Player {
         const piece = this.getPiece(pieceId);
         piece.incrementPosition(diceValue, board, game);
     }
+    checkAllPiecesInHome() {
+        return this.pieces.every(piece => piece.position === HOME_POSITIONS[this.id]);
+    }
+    
 }

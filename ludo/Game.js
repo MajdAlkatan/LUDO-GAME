@@ -6,6 +6,7 @@ import {
     HOME_ENTRANCE,
     SAFE_POSITIONS,
     HOME_POSITIONS,
+    TURNING_POINTS,
     START_POSITIONS,
 
 } from './constants.js';
@@ -23,8 +24,8 @@ export class Game {
     _turn;
     _state;
 
+
     constructor() {
-        console.log('Hello World! Lets play Ludo!');
         this.board = new Board();
         this.listenDiceClick();
         this.listenResetClick();
@@ -86,11 +87,34 @@ export class Game {
         const computerPieces = gameState.boardState.P2;
         const humanPieces = gameState.boardState.P1;
 
-        // Progress towards home
-        computerPieces.forEach(p => {
+        console.log("Evaluating state:");
+        console.log("\n--------------------------------");
 
+        console.log(`Computer pieces: ${JSON.stringify(computerPieces)}`);
+        console.log("\n--------------------------------");
+
+        console.log(`Human pieces: ${JSON.stringify(humanPieces)}`);
+        console.log("\n--------------------------------");
+
+        // Helper function to calculate distance to home
+        const distanceToHome = (player, position) => {
+            const turningPoint = TURNING_POINTS[player];
+            const homeEntrance = HOME_ENTRANCE[player][0];
+            if (position <= turningPoint) {
+                return homeEntrance - position;
+            } else {
+                return 52 - position + homeEntrance;
+            }
+        };
+
+        // Progress towards home and safety evaluation
+        computerPieces.forEach(p => {
             if (!p.isHome) {
-                score += (52 - p.position) * 10; // Max 520 per piece
+                const distance = distanceToHome('P2', p.position);
+                score += (52 - distance) * 10; // Progress multiplier
+                if (SAFE_POSITIONS.includes(p.position)) {
+                    score += 50; // Bonus for being on a safe position
+                }
             } else {
                 score += 1000; // Bonus for pieces in home
             }
@@ -98,26 +122,63 @@ export class Game {
 
         humanPieces.forEach(p => {
             if (!p.isHome) {
-                score -= (52 - p.position) * 8;
+                const distance = distanceToHome('P1', p.position);
+                score -= (52 - distance) * 8; // Deduct for opponent's progress
+                if (SAFE_POSITIONS.includes(p.position)) {
+                    score -= 50; // Penalty for opponent being in a safe position
+                }
             }
         });
 
+        // Additional penalty for vulnerable pieces not on safe positions
         computerPieces.forEach(p => {
             if (!SAFE_POSITIONS.includes(p.position) && !p.isHome) {
-                score -= 50;
+                score -= 30; // Adjust penalty weight as needed
             }
         });
+
+        // Encourage blocking opponent's progress
+        humanPieces.forEach(hp => {
+            computerPieces.forEach(cp => {
+                if (cp.position === hp.position && !cp.isHome && !hp.isHome) {
+                    score += 100; // Bonus for blocking
+                }
+            });
+        });
+
+        // Bonus for having multiple pieces near home entrance or home
+        const nearHomeBonus = (pieces, player) => {
+            const homeEntrance = HOME_ENTRANCE[player];
+            return pieces.reduce((bonus, p) => {
+                if (homeEntrance.includes(p.position)) {
+                    bonus += 50; // Bonus for being near home entrance
+                }
+                return bonus;
+            }, 0);
+        };
+        score += nearHomeBonus(computerPieces, 'P2');
+        score -= nearHomeBonus(humanPieces, 'P1');
+
+        console.log(`Evaluation score: ${score}`);
+        console.log("\n--------------------------------");
 
         return score;
     }
+
     /**
      * 
      * @param {AIDecisionNode} node 
      * @returns 
      */
     expectimax(node) {
+        console.log(`Processing node at depth ${node.depth}, isComputerTurn: ${node.isComputerTurn}`);
+        console.log("\n--------------------------------");
+
         if (node.depth >= AI_CONFIG.SEARCH_DEPTH) {
             let result = this.evaluateState(node.gameState);
+            console.log(`Leaf node reached. Evaluation result: ${result}`);
+            console.log("\n--------------------------------");
+
             return result;
         }
 
@@ -145,10 +206,14 @@ export class Game {
                         new AIDecisionNode(newState, node.depth + 1, false, node)
                     );
                 }
+                console.log(`Computer move: ${JSON.stringify(move)}, Value: ${value}`);
+                console.log("\n--------------------------------");
 
                 maxValue = Math.max(maxValue, value);
 
             });
+            console.log(`Max value for computer: ${maxValue}`);
+            console.log("\n--------------------------------");
 
             return maxValue;
         } else {
@@ -174,8 +239,15 @@ export class Game {
                         new AIDecisionNode(newState, node.depth + 1, true, node)
                     );
                 }
+                console.log(`Human move: ${JSON.stringify(move)}, Value: ${value}`);
+                console.log("\n--------------------------------");
+
+
                 minValue = Math.min(minValue, value);
             });
+            console.log(`Min value for human: ${minValue}`);
+            console.log("\n--------------------------------");
+
 
             return minValue;
         }
@@ -187,6 +259,9 @@ export class Game {
     chanceMove(node) {
         if (node.depth >= AI_CONFIG.SEARCH_DEPTH) {
             let result = this.evaluateState(node.gameState);
+            console.log(`Chance node reached. Evaluation result: ${result}`);
+            console.log("\n--------------------------------");
+
             return result;
 
         }
@@ -199,10 +274,14 @@ export class Game {
                 let value = this.expectimax(
                     new AIDecisionNode(state, node.depth, node.isComputerTurn, node)
                 );
+                console.log(`Dice roll: ${idx}, Probability: ${possibility}, Value: ${value}`);
+                console.log("\n--------------------------------");
 
                 expectedValue += value * possibility;
             }
         )
+        console.log(`Expected value: ${expectedValue}`);
+        console.log("\n--------------------------------");
 
         return expectedValue;
     }
@@ -256,6 +335,9 @@ export class Game {
 
         // Return null if no valid moves
         if (!possibleMoves || possibleMoves.length === 0) {
+            console.log("No valid moves for computer.");
+            console.log("\n--------------------------------");
+
             return null;
         }
 
@@ -266,6 +348,9 @@ export class Game {
             const newState = this.simulateMove(originalState, move);
             const node = new AIDecisionNode(newState, 0, false);
             const value = this.expectimax(node);
+            console.log(`Evaluating move: ${move}, Value: ${value}`);
+            console.log("\n--------------------------------");
+
 
             if (value > bestValue) {
                 bestValue = value;
@@ -273,10 +358,22 @@ export class Game {
             }
         });
 
-        console.log("best move value forever " + bestValue);
+        console.log("best move value  " + bestValue);
+        console.log("\n--------------------------------");
+        console.log("\n--------------------------------");
+
         console.log("node :", AIDecisionNode.nodeNumber);
+        console.log("\n--------------------------------");
+        console.log("\n--------------------------------");
+
 
         AIDecisionNode.nodeNumber = 0;
+        console.log("\n--------------------------------");
+        console.log("\n--------------------------------");
+
+        console.log(`Best move: ${bestMove}, Best value: ${bestValue}`);
+        console.log("\n--------------------------------");
+        console.log("\n--------------------------------");
 
 
         return bestMove;
@@ -287,18 +384,77 @@ export class Game {
     }
 
     onDiceClick() {
-        console.log('dice clicked!');
-        this.diceValue = 1 + Math.floor(Math.random() * 6);
-        if (this.diceValue > 3) {
-            this.diceValue = 6;
-        }
-        else {
-            this.diceValue = 1;
-        }
-        this.state = STATE.DICE_ROLLED;
+        const diceElement = document.querySelector('.dice-value');
+        diceElement.classList.add('updated');  // Trigger the glow effect on dice value
 
-        this.checkForEligiblePieces();
+        console.log('Dice clicked!');
+
+        // Initialize slot machine-like rapid number changing
+        let rollCount = 0;
+        const interval = setInterval(() => {
+            // Generate a random dice value between 1 and 6
+            const randomValue = Math.floor(Math.random() * 6) + 1;
+            diceElement.innerText = randomValue;
+            rollCount++;
+
+            if (rollCount >= 20) {  // Stop spinning after 20 rolls (adjust as needed)
+                clearInterval(interval);  // Stop the interval and show final value
+
+                // Calculate the dice value based on the defined probability distribution
+                const rollProbabilities = AI_CONFIG.ROLL_PROBABILITIES; // [1/6, 1/6, 1/6, 1/6, 1/6, 1/6]
+                const cumulativeProbabilities = rollProbabilities.reduce((acc, prob, index) => {
+                    acc.push((acc[index - 1] || 0) + prob);
+                    return acc;
+                }, []);
+
+                const randomValueForRoll = Math.random();
+                this.diceValue = cumulativeProbabilities.findIndex(cumProb => randomValueForRoll < cumProb) + 1;
+
+                // Set the final dice value after spinning
+                diceElement.innerText = this.diceValue;
+
+                console.log(`Dice rolled: ${this.diceValue}`);
+
+                // Track consecutive 6s
+                if (this.diceValue === 6) {
+                    this.consecutiveSixes = (this.consecutiveSixes || 0) + 1;
+                } else {
+                    this.consecutiveSixes = 0; // Reset if it's not a 6
+                }
+
+                // If three 6s in a row, change turn
+                if (this.consecutiveSixes === 3) {
+                    console.log("Three 6s rolled! Changing turn...");
+                    this.incrementTurn();  // Change to the next player's turn
+                    this.consecutiveSixes = 0; // Reset after switching turn
+
+                }
+
+                // Update the state after rolling
+                this.state = STATE.DICE_ROLLED;
+
+                // Call function to check eligible pieces
+                this.checkForEligiblePieces();
+            }
+        }, 50);  // Adjust the speed (currently 50ms) of the rapid "spinning"
     }
+
+
+
+
+    resetTestConsecutiveSixes() {
+        this.testConsecutiveSixes = 0;
+    }
+
+
+
+    incrementTurn() {
+        this.turn = this.turn === 0 ? 1 : 0; // Switch turns
+        this.state = STATE.DICE_NOT_ROLLED; // Reset state
+        console.log(`Turn changed! It's now player ${this.turn === 0 ? 'P1' : 'P2'}'s turn.`);
+    }
+
+
 
     checkForEligiblePieces() {
         const playerId = PLAYERS[this.turn];
@@ -324,10 +480,7 @@ export class Game {
         }
     }
 
-    incrementTurn() {
-        this.turn = this.turn === 0 ? 1 : 0;
-        this.state = STATE.DICE_NOT_ROLLED;
-    }
+
 
     listenResetClick() {
         UI.listenResetClick(this.resetGame.bind(this));

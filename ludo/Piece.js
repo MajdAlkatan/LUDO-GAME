@@ -47,32 +47,39 @@ export class Piece {
 
     incrementPosition(diceValue, board, game) {
         let moveBy = diceValue;
-
+    
         const interval = setInterval(() => {
             this.position = this.getNextPosition();
             UI.setPiecePosition(this.playerId, this.id, this.position);
             moveBy--;
-
+    
             if (moveBy === 0) {
                 clearInterval(interval);
+    
 
-                if (this.position === HOME_POSITIONS[this.playerId]) {
-                    alert(`Player ${this.playerId} wins!`);
-                    game.resetGame();
-                    return;
-                }
-
+                // التحقق من القتل (إذا تم قتل قطعة من الخصم)
                 const isKill = board.checkForKill(this.playerId, this.id);
-
+    
                 if (isKill || diceValue === 6) {
                     game.state = STATE.DICE_NOT_ROLLED;
                     return;
                 }
-
+    
+                // التحقق إذا كانت جميع القطع قد وصلت إلى المنزل
+                if (board.players[this.playerId].checkAllPiecesInHome()) {  // التعديل هنا
+                    alert(`Player ${this.playerId} wins!`);
+                    game.resetGame();
+                    return;
+                }
+    
+                // زيادة الدور
                 game.incrementTurn();
             }
         }, 200);
     }
+    
+    
+    
 
     getNextPosition() {
         if (this.position === TURNING_POINTS[this.playerId]) {
