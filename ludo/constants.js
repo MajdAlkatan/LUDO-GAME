@@ -122,6 +122,6 @@ export const STATE = {
 }
 export const AI_CONFIG = {
     SEARCH_DEPTH: 3,
-    BRANCH_LIMIT: 3,
+    BRANCH_LIMIT: 4,
     ROLL_PROBABILITIES: [1/6, 1/6, 1/6, 1/6, 1/6, 1/6]
 };

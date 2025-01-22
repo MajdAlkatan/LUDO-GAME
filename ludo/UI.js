@@ -87,13 +87,3 @@ export class UI {
         document.querySelector('.dice-value').innerText = value;
     }
 }
-
-// UI.setPiecePosition('P1', 0, 0);
-// UI.setTurn(0);
-// UI.setTurn(1);
-
-// UI.disableDice();
-// UI.enableDice();
-// UI.highlightPieces('P1', [0]);
-// UI.unhighlightPieces();
-// UI.setDiceValue(5);

@@ -1,19 +1,19 @@
 
-import { 
-    STATE, 
-    PLAYERS, 
+import {
+    STATE,
+    PLAYERS,
     AI_CONFIG,
-    HOME_ENTRANCE ,
+    HOME_ENTRANCE,
     SAFE_POSITIONS,
     HOME_POSITIONS,
-    START_POSITIONS, 
+    START_POSITIONS,
 
 } from './constants.js';
 import { UI } from './UI.js';
 import { Board } from './Board.js';
 
 import GameState from './State.js';
-import AIDecisionNode from './node.js';
+import { AIDecisionNode } from './node.js';
 
 
 
@@ -88,6 +88,7 @@ export class Game {
 
         // Progress towards home
         computerPieces.forEach(p => {
+
             if (!p.isHome) {
                 score += (52 - p.position) * 10; // Max 520 per piece
             } else {
@@ -109,22 +110,44 @@ export class Game {
 
         return score;
     }
+    /**
+     * 
+     * @param {AIDecisionNode} node 
+     * @returns 
+     */
     expectimax(node) {
         if (node.depth >= AI_CONFIG.SEARCH_DEPTH) {
-            return this.evaluateState(node.gameState);
+            let result = this.evaluateState(node.gameState);
+            return result;
         }
 
         if (node.isComputerTurn) {
             let maxValue = -Infinity;
             const moves = this.getPossibleMoves(node.gameState, 'P2');
 
+
             // moves.slice(0, AI_CONFIG.BRANCH_DEPTH)
             moves.forEach(move => {
+
                 const newState = this.simulateMove(node.gameState, move);
-                const value = this.chanceMove(
-                    new AIDecisionNode(newState, node.depth + 1, false)
-                );
+                let dices = 0
+                try {
+                    dices = node.gameState.diceValue + node.parentNode.gameState.diceValue + node.parentNode.parentNode.gameState.diceValue
+                }
+                catch (e) {
+                    dices = 1;
+                }
+                let value = 0
+                if ((node.gameState.diceValue === 6) && (dices != 18)) {
+                    value = new AIDecisionNode(newState, node.depth + 1, true, node)
+                } else {
+                    value = this.chanceMove(
+                        new AIDecisionNode(newState, node.depth + 1, false, node)
+                    );
+                }
+
                 maxValue = Math.max(maxValue, value);
+
             });
 
             return maxValue;
@@ -133,9 +156,24 @@ export class Game {
             const moves = this.getPossibleMoves(node.gameState, 'P1');
             moves.forEach(move => {
                 const newState = this.simulateMove(node.gameState, move);
-                const value = this.chanceMove(
-                    new AIDecisionNode(newState, node.depth + 1, true)
-                );
+                let dices = 0;
+                try {
+                    dices = node.gameState.diceValue + node.parentNode.gameState.diceValue + node.parentNode.parentNode.gameState.diceValue
+                }
+                catch (e) {
+                    dices = 1;
+                }
+                let value
+                if ((node.gameState.diceValue === 6) && (dices != 18)) {
+                    value = this.chanceMove(
+                        new AIDecisionNode(newState, node.depth + 1, false, node)
+                    );
+                }
+                else {
+                    value = this.chanceMove(
+                        new AIDecisionNode(newState, node.depth + 1, true, node)
+                    );
+                }
                 minValue = Math.min(minValue, value);
             });
 
@@ -146,32 +184,31 @@ export class Game {
     /**
     * @param {AIDecisionNode} node
     */
-    chanceMove(node){
+    chanceMove(node) {
         if (node.depth >= AI_CONFIG.SEARCH_DEPTH) {
-            return this.evaluateState(node.gameState);
+            let result = this.evaluateState(node.gameState);
+            return result;
+
         }
         let expectedValue = 0;
         AI_CONFIG.ROLL_PROBABILITIES.forEach(
             (possibility, idx) => {
-                let value = 0;
-                if (node.isComputerTurn){
-                    let state = node.gameState.clone();
-                    state.diceValue = idx;
-                    value = this.expectimax(new AIDecisionNode(state, node.depth, true));
-                }
-                else
-                {
-                    let state = node.gameState.clone();
-                    state.diceValue = idx;
-                    value = this.expectimax(new AIDecisionNode(state, node.depth, false));
-                }
-                expectedValue += possibility * value;
+                let state = node.gameState.clone();
+                state.diceValue = idx;
+
+                let value = this.expectimax(
+                    new AIDecisionNode(state, node.depth, node.isComputerTurn, node)
+                );
+
+                expectedValue += value * possibility;
             }
         )
+
         return expectedValue;
     }
     getPossibleMoves(gameState, playerId) {
         const currentPositions = gameState.boardState[playerId];
+
         return currentPositions
             .map((piece, idx) => ({
                 pieceId: idx,
@@ -181,17 +218,17 @@ export class Game {
             .map(p => p.pieceId);
     }
     isPieceEligible(pieceState, diceValue) {
- 
+
         if (pieceState.isHome) return false;
         if (pieceState.isAtBase && diceValue !== 6) return false;
-        
+
         const playerId = 'P2';
         const homeEntrance = HOME_ENTRANCE[playerId];
         if (homeEntrance.includes(pieceState.position)) {
             const remainingSteps = HOME_POSITIONS[playerId] - pieceState.position;
             if (diceValue > remainingSteps) return false;
         }
-        
+
         return true;
     }
     simulateMove(originalState, pieceId) {
@@ -215,26 +252,33 @@ export class Game {
         const originalState = this.getCurrentGameState();
         // returns all possible movable pieces for computer
         const possibleMoves = this.getPossibleMoves(originalState, 'P2');
-    
+
+
         // Return null if no valid moves
         if (!possibleMoves || possibleMoves.length === 0) {
             return null;
         }
-    
+
         let bestMove = possibleMoves[0];
         let bestValue = -Infinity;
-    
+
         possibleMoves.forEach(move => {
             const newState = this.simulateMove(originalState, move);
             const node = new AIDecisionNode(newState, 0, false);
             const value = this.expectimax(node);
-    
+
             if (value > bestValue) {
                 bestValue = value;
                 bestMove = move;
             }
         });
-    
+
+        console.log("best move value forever " + bestValue);
+        console.log("node :", AIDecisionNode.nodeNumber);
+
+        AIDecisionNode.nodeNumber = 0;
+
+
         return bestMove;
     }
 
@@ -245,6 +289,12 @@ export class Game {
     onDiceClick() {
         console.log('dice clicked!');
         this.diceValue = 1 + Math.floor(Math.random() * 6);
+        if (this.diceValue > 3) {
+            this.diceValue = 6;
+        }
+        else {
+            this.diceValue = 1;
+        }
         this.state = STATE.DICE_ROLLED;
 
         this.checkForEligiblePieces();
@@ -254,7 +304,7 @@ export class Game {
         const playerId = PLAYERS[this.turn];
         const player = this.board.players[playerId];
         const eligiblePieces = this.board.getEligiblePieces(playerId, this.diceValue);
-    
+
         if (eligiblePieces.length) {
             if (player.isComputer) {
                 setTimeout(() => {
