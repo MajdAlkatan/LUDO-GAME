@@ -57,7 +57,6 @@ export class Piece {
                 clearInterval(interval);
     
 
-                // التحقق من القتل (إذا تم قتل قطعة من الخصم)
                 const isKill = board.checkForKill(this.playerId, this.id);
     
                 if (isKill || diceValue === 6) {
@@ -65,14 +64,12 @@ export class Piece {
                     return;
                 }
     
-                // التحقق إذا كانت جميع القطع قد وصلت إلى المنزل
-                if (board.players[this.playerId].checkAllPiecesInHome()) {  // التعديل هنا
+                if (board.players[this.playerId].checkAllPiecesInHome()) { 
                     alert(`Player ${this.playerId} wins!`);
                     game.resetGame();
                     return;
                 }
     
-                // زيادة الدور
                 game.incrementTurn();
             }
         }, 200);

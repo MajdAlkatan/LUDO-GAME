@@ -18,12 +18,12 @@ export class Board {
 
     getEligiblePieces(playerId, diceValue) {
         return this.players[playerId].getEligiblePieces(diceValue);
+        // ح حسب قيمة النردid  هي بترجع القطع الممكنة للاعب الو 
     }
 
     handlePieceClick(playerId, pieceId, diceValue, game) {
         const player = this.players[playerId];
         
-        // Validate piece ID
         if (pieceId < 0 || pieceId > 3) {
             console.error('Invalid piece ID:', pieceId);
             game.incrementTurn();
@@ -48,7 +48,6 @@ export class Board {
         player.movePieceBy(pieceId, diceValue, this, game);
     }
 
-    // Add this method for handling kills
     checkForKill(playerId, pieceId) {
         const currentPlayer = this.players[playerId];
         const currentPiece = currentPlayer.getPiece(pieceId);
@@ -61,10 +60,9 @@ export class Board {
 
         opponent.pieces.forEach(opponentPiece => {
             if (
-                opponentPiece.position === currentPosition && // Same position
-                !SAFE_POSITIONS.includes(currentPosition) // Not in a safe position
+                opponentPiece.position === currentPosition && 
+                !SAFE_POSITIONS.includes(currentPosition) 
             ) {
-                // Move opponent's piece back to base
                 opponentPiece.setPosition(BASE_POSITIONS[opponentId][opponentPiece.id]);
                 kill = true;
             }

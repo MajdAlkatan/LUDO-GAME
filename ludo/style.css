@@ -187,7 +187,7 @@
 }
 
 /* Optional: Add a glow effect when the dice value is updated */
-.dice-value.updated {
+.dice-value.rolling {
     animation: glow 0.5s ease-in-out;
 }
 

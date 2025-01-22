@@ -296,36 +296,7 @@ export class Game {
             .filter(p => p.eligible)
             .map(p => p.pieceId);
     }
-    isPieceEligible(pieceState, diceValue) {
 
-        if (pieceState.isHome) return false;
-        if (pieceState.isAtBase && diceValue !== 6) return false;
-
-        const playerId = 'P2';
-        const homeEntrance = HOME_ENTRANCE[playerId];
-        if (homeEntrance.includes(pieceState.position)) {
-            const remainingSteps = HOME_POSITIONS[playerId] - pieceState.position;
-            if (diceValue > remainingSteps) return false;
-        }
-
-        return true;
-    }
-    simulateMove(originalState, pieceId) {
-        const newState = originalState.clone();
-        const piece = newState.boardState.P2[pieceId];
-
-
-        if (piece.isAtBase) {
-            piece.position = START_POSITIONS.P2;
-        } else {
-            piece.position = Math.min(
-                piece.position + newState.diceValue,
-                HOME_POSITIONS.P2
-            );
-        }
-
-        return newState;
-    }
     getBestComputerMove() {
         // returns the current game state
         const originalState = this.getCurrentGameState();
@@ -378,6 +349,36 @@ export class Game {
 
         return bestMove;
     }
+    isPieceEligible(pieceState, diceValue) {
+
+        if (pieceState.isHome) return false;
+        if (pieceState.isAtBase && diceValue !== 6) return false;
+
+        const playerId = 'P2';
+        const homeEntrance = HOME_ENTRANCE[playerId];
+        if (homeEntrance.includes(pieceState.position)) {
+            const remainingSteps = HOME_POSITIONS[playerId] - pieceState.position;
+            if (diceValue > remainingSteps) return false;
+        }
+
+        return true;
+    }
+    simulateMove(originalState, pieceId) {
+        const newState = originalState.clone();
+        const piece = newState.boardState.P2[pieceId];
+
+
+        if (piece.isAtBase) {
+            piece.position = START_POSITIONS.P2;
+        } else {
+            piece.position = Math.min(
+                piece.position + newState.diceValue,
+                HOME_POSITIONS.P2
+            );
+        }
+
+        return newState;
+    }
 
     listenDiceClick() {
         UI.listenDiceClick(this.onDiceClick.bind(this));
@@ -385,67 +386,63 @@ export class Game {
 
     onDiceClick() {
         const diceElement = document.querySelector('.dice-value');
-        diceElement.classList.add('updated');  // Trigger the glow effect on dice value
+        const DICE_ANIMATION_DURATION = 1000; //ms
+        const FRAME_DELAY = 80; 
 
-        console.log('Dice clicked!');
+        UI.disableDice();
+          // logic of dice rolling  
+        const rollProbabilities = AI_CONFIG.ROLL_PROBABILITIES;
+        const cumulativeProbabilities = rollProbabilities.reduce((acc, prob, index) => {
+            acc.push((acc[index - 1] || 0) + prob);
+            return acc;
+        }, []);
+        const randomValue = Math.random();
+        this.diceValue = cumulativeProbabilities.findIndex(cumProb => randomValue < cumProb) + 1;
 
-        // Initialize slot machine-like rapid number changing
-        let rollCount = 0;
-        const interval = setInterval(() => {
-            // Generate a random dice value between 1 and 6
-            const randomValue = Math.floor(Math.random() * 6) + 1;
-            diceElement.innerText = randomValue;
-            rollCount++;
+        // Slot machine animation
+        let startTime = Date.now();
+        const animateDice = () => {
+            const elapsed = Date.now() - startTime;
+            const progress = elapsed / DICE_ANIMATION_DURATION;
 
-            if (rollCount >= 20) {  // Stop spinning after 20 rolls (adjust as needed)
-                clearInterval(interval);  // Stop the interval and show final value
+            if (progress < 1) {
+                // Generate random value during animation
+                const tempValue = Math.floor(Math.random() * 6) + 1;
+                diceElement.textContent = tempValue;
+                requestAnimationFrame(animateDice);
+            } else {
+                // Set final value
+                diceElement.textContent = this.diceValue;
+                diceElement.classList.remove('rolling');
+                UI.enableDice();
 
-                // Calculate the dice value based on the defined probability distribution
-                const rollProbabilities = AI_CONFIG.ROLL_PROBABILITIES; // [1/6, 1/6, 1/6, 1/6, 1/6, 1/6]
-                const cumulativeProbabilities = rollProbabilities.reduce((acc, prob, index) => {
-                    acc.push((acc[index - 1] || 0) + prob);
-                    return acc;
-                }, []);
-
-                const randomValueForRoll = Math.random();
-                this.diceValue = cumulativeProbabilities.findIndex(cumProb => randomValueForRoll < cumProb) + 1;
-
-                // Set the final dice value after spinning
-                diceElement.innerText = this.diceValue;
-
-                console.log(`Dice rolled: ${this.diceValue}`);
-
-                // Track consecutive 6s
-                if (this.diceValue === 6) {
-                    this.consecutiveSixes = (this.consecutiveSixes || 0) + 1;
-                } else {
-                    this.consecutiveSixes = 0; // Reset if it's not a 6
-                }
-
-                // If three 6s in a row, change turn
-                if (this.consecutiveSixes === 3) {
-                    console.log("Three 6s rolled! Changing turn...");
-                    this.incrementTurn();  // Change to the next player's turn
-                    this.consecutiveSixes = 0; // Reset after switching turn
-
-                }
-
-                // Update the state after rolling
-                this.state = STATE.DICE_ROLLED;
-
-                // Call function to check eligible pieces
-                this.checkForEligiblePieces();
+                // Handle dice logic
+                this.handleDiceResult();
             }
-        }, 50);  // Adjust the speed (currently 50ms) of the rapid "spinning"
+        };
+
+        requestAnimationFrame(animateDice);
     }
 
+    handleDiceResult() {
+        console.log(`Final dice value: ${this.diceValue}`);
 
+        if (this.diceValue === 6) {
+            this.consecutiveSixes = (this.consecutiveSixes || 0) + 1;
+        } else {
+            this.consecutiveSixes = 0;
+        }
 
+        if (this.consecutiveSixes === 3) {
+            console.log("Three 6s! Skipping turn.");
+            this.consecutiveSixes = 0;
+            this.incrementTurn();
+            return;
+        }
 
-    resetTestConsecutiveSixes() {
-        this.testConsecutiveSixes = 0;
+        this.state = STATE.DICE_ROLLED;
+        this.checkForEligiblePieces();
     }
-
 
 
     incrementTurn() {
@@ -457,15 +454,15 @@ export class Game {
 
 
     checkForEligiblePieces() {
-        const playerId = PLAYERS[this.turn];
-        const player = this.board.players[playerId];
+        
+        const playerId = PLAYERS[this.turn]; // 'P1' أو 'P2' يعني هون 
+        const player = this.board.players[playerId]; // P1 أو P2 عم جيب الاوبجيكت لاعب يلي هو يا 
         const eligiblePieces = this.board.getEligiblePieces(playerId, this.diceValue);
 
         if (eligiblePieces.length) {
             if (player.isComputer) {
                 setTimeout(() => {
                     const pieceId = this.getBestComputerMove();
-                    // Add proper validation
                     if (pieceId !== null && pieceId >= 0 && pieceId <= 3) {
                         this.board.handlePieceClick(playerId, pieceId, this.diceValue, this);
                     } else {
