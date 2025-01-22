@@ -11,7 +11,7 @@
 
     height: 450px;
     width: 100%;
-    background-image: url('./ludo-bg1.jpg');
+    background-image: url('./ludo-bg.jpg');
     background-size: contain;
     position: relative;
 }

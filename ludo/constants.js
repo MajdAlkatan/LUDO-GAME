@@ -121,7 +121,7 @@ export const STATE = {
     DICE_ROLLED: 'DICE_ROLLED',
 }
 export const AI_CONFIG = {
-    SEARCH_DEPTH: 2,
+    SEARCH_DEPTH: 3,
     BRANCH_LIMIT: 3,
     ROLL_PROBABILITIES: [1/6, 1/6, 1/6, 1/6, 1/6, 1/6]
 };
