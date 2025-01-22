@@ -1,6 +1,6 @@
 // Player.js
 import { Piece } from './Piece.js';
-import { HOME_POSITIONS ,BASE_POSITIONS, START_POSITIONS } from './constants.js';
+import { HOME_POSITIONS, BASE_POSITIONS, START_POSITIONS } from './constants.js';
 
 export class Player {
     id;
@@ -23,6 +23,11 @@ export class Player {
             isHome: piece.position === HOME_POSITIONS[this.id]
         }));
     }
+    // getPieceStates() {
+    //     return this.pieces.map(piece => ({
+    //         ...piece
+    //     }));
+    // }
     getPiece(pieceId) {
         return this.pieces[pieceId];
     }
@@ -45,5 +50,5 @@ export class Player {
     checkAllPiecesInHome() {
         return this.pieces.every(piece => piece.position === HOME_POSITIONS[this.id]);
     }
-    
+
 }
