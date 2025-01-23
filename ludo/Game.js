@@ -543,29 +543,5 @@ export class Game {
         const piece = target.getAttribute('piece');
         this.board.handlePieceClick(player, piece, this.diceValue, this);
     }
-    // In Game class's updatePiecePositions method:
-    // In Game class
-updatePiecePositions() {
-    PLAYERS.forEach(player => {
-      const positionsMap = new Map();
-  
-      // Group pieces by their current position
-      this.pieces[player].forEach((position, pieceIndex) => {
-        if (!positionsMap.has(position)) {
-          positionsMap.set(position, []);
-        }
-        positionsMap.get(position).push(pieceIndex);
-      });
-  
-      // Adjust positions for overlapping pieces
-      positionsMap.forEach((pieces, position) => {
-        if (pieces.length > 1) {
-          this.adjustOverlappingPositions(player, position, pieces);
-        } else {
-          // Single piece: center it
-          UI.setPiecePosition(player, pieces[0], position);
-        }
-      });
-    });
-  }
+    
 }

@@ -5,24 +5,39 @@
 .ludo-container {
     width: 450px;
     margin: 20px auto;
+    perspective: 1000px; /* Add perspective to the container */
+
 }
 
 .ludo-container .ludo {
 
     height: 450px;
     width: 100%;
-    background-image: url('./ludo-bg.jpg');
+    background-image: url('./ludo-bg1.jpg');
     background-size: contain;
     position: relative;
 }
+/* style.css */
 
-.player-pieces {
-    height: 100%;
-    width: 100%;
-    position: relative;
+
+.player-piece[piece-count="2"] {
+    width: 2.6%;
+    height: 2.6%;
 }
 
+.player-piece[piece-count="3"] {
+    width: 2.2%;
+    height: 2.2%;
+}
+
+.player-piece[piece-count="4"] {
+    width: 1.8%;
+    height: 1.8%;
+}
+
+
 .player-piece {
+    
     width: 4%; /* Adjusted size for better visibility */
     height: 4%; /* Adjusted size for better visibility */
     border-radius: 50%; /* Full circle shape */
@@ -33,6 +48,16 @@
     box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.2), 0px 0px 10px rgba(0, 0, 0, 0.1)!important; /* Added shadow for depth */
     background: linear-gradient(145deg, #ffffff, #dcdcdc); /* Subtle gradient effect */
 }
+.player-piece::before {
+    content: attr(piece);
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    color: white;
+    font-weight: bold;
+    font-size: 0.8em;
+}
 
 /* Highlighted piece with an interactive effect */
 .player-piece.highlight {
@@ -41,6 +66,7 @@
     background: linear-gradient(145deg, #fffae3, #ffe09d); /* Lighter background to indicate selection */
     box-shadow: 0px 0px 20px rgba(0, 0, 0, 0.4), 0px 0px 25px rgba(255, 255, 0, 0.3); /* Brighter shadow on hover */
     animation: spin 1s infinite linear;
+    scale: calc(1.2);
 }
 
 /* Animation for highlighting piece */
@@ -58,16 +84,17 @@
 
 /* Player 1 piece styling */
 [player-id="P1"].player-piece {
-    background-color: #2eafff; /* Light blue */
-    background: linear-gradient(145deg, #2e46ff, #2a1bce); /* Gradient for more dimension */
-    box-shadow: 0px 6px 12px rgba(46, 175, 255, 0.3); /* Subtle shadow for depth */
+    background-color: #ff0000; /* Light blue */
+    background: linear-gradient(145deg, #ff0202, #F50002); /* Gradient for more dimension */
+    box-shadow: 0px 6px 12px rgba(0, 0, 0, 0.3); /* Subtle shadow for depth */
+
 }
 
 /* Player 2 piece styling */
 [player-id="P2"].player-piece {
-    background-color: #00b550; /* Bright green */
-    background: linear-gradient(145deg, #8cff00, #579e00); /* Gradient for more dimension */
-    box-shadow: 0px 6px 12px rgba(0, 181, 80, 0.3); /* Subtle shadow for depth */
+    background-color: #ffea01; 
+    background: linear-gradient(145deg, #ffea01, #ffea01); /* Gradient for more dimension */
+    box-shadow: 0px 6px 12px rgb(255, 251, 1); /* Subtle shadow for depth */
 }
 
 
@@ -82,13 +109,13 @@
 .player-bases [player-id="P1"].player-base {
     bottom: 0;
     left: 0;
-    border-color: #1295e7;
+    border-color: #F50002;
 }
 
 .player-bases [player-id="P2"].player-base {
     top: 0;
     right: 0;
-    border-color: #049645;
+    border-color: #FFD801;
 }
 
 .player-base.highlight {
