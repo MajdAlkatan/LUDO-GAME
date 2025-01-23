@@ -97,66 +97,51 @@ export class Game {
         console.log(`Human pieces: ${JSON.stringify(humanPieces)}`);
         console.log("\n--------------------------------");
 
-        // Helper function to calculate distance to home
         const distanceToHome = (player, position) => {
             const turningPoint = TURNING_POINTS[player];
-            const homeEntrance = HOME_ENTRANCE[player][0];
-            if (position <= turningPoint) {
-                return homeEntrance - position;
-            } else {
-                return 52 - position + homeEntrance;
+            if (position > turningPoint){
+                return 52 - Math.abs(turningPoint - position);
+            }
+            else{
+                return (turningPoint + 6) - position;
             }
         };
 
-        // Progress towards home and safety evaluation
         computerPieces.forEach(p => {
             if (!p.isHome) {
                 const distance = distanceToHome('P2', p.position);
-                score += (52 - distance) * 10; // Progress multiplier
+                score += (52 - distance) * 10;
                 if (SAFE_POSITIONS.includes(p.position)) {
-                    score += 50; // Bonus for being on a safe position
+                    score += 50;
                 }
             } else {
-                score += 1000; // Bonus for pieces in home
+                score += 1000;
             }
         });
 
         humanPieces.forEach(p => {
             if (!p.isHome) {
                 const distance = distanceToHome('P1', p.position);
-                score -= (52 - distance) * 8; // Deduct for opponent's progress
+                score -= (52 - distance) * 8;
                 if (SAFE_POSITIONS.includes(p.position)) {
-                    score -= 50; // Penalty for opponent being in a safe position
+                    score -= 50;
                 }
+            }
+            else {
+                score -= 500;
             }
         });
 
-        // Additional penalty for vulnerable pieces not on safe positions
-        computerPieces.forEach(p => {
-            if (!SAFE_POSITIONS.includes(p.position) && !p.isHome) {
-                score -= 30; // Adjust penalty weight as needed
-            }
-        });
-
-        // Encourage blocking opponent's progress
-        humanPieces.forEach(hp => {
-            computerPieces.forEach(cp => {
-                if (cp.position === hp.position && !cp.isHome && !hp.isHome) {
-                    score += 100; // Bonus for blocking
-                }
-            });
-        });
-
-        // Bonus for having multiple pieces near home entrance or home
         const nearHomeBonus = (pieces, player) => {
             const homeEntrance = HOME_ENTRANCE[player];
             return pieces.reduce((bonus, p) => {
                 if (homeEntrance.includes(p.position)) {
-                    bonus += 50; // Bonus for being near home entrance
+                    bonus += 100;
                 }
                 return bonus;
             }, 0);
         };
+
         score += nearHomeBonus(computerPieces, 'P2');
         score -= nearHomeBonus(humanPieces, 'P1');
 
