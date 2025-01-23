@@ -20,7 +20,9 @@ export class Player {
         return this.pieces.map(piece => ({
             position: piece.position,
             isAtBase: piece.isAtBase(),
-            isHome: piece.position === HOME_POSITIONS[this.id]
+            isHome: piece.position === HOME_POSITIONS[this.id],
+            playerId: piece.playerId,
+            id: piece.id,
         }));
     }
     // getPieceStates() {

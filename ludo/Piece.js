@@ -47,7 +47,9 @@ export class Piece {
 
     incrementPosition(diceValue, board, game) {
         let moveBy = diceValue;
-    
+        console.log("Old position: " + this.position)
+        console.log("Move by: " + moveBy);
+        
         const interval = setInterval(() => {
             this.position = this.getNextPosition();
             UI.setPiecePosition(this.playerId, this.id, this.position);
