@@ -23,11 +23,11 @@
 }
 
 .player-piece {
-    width: 5%; /* Adjusted size for better visibility */
-    height: 5%; /* Adjusted size for better visibility */
+    width: 4%; /* Adjusted size for better visibility */
+    height: 4%; /* Adjusted size for better visibility */
     border-radius: 50%; /* Full circle shape */
     position: absolute;
-    transform: translate(18%, 16%);
+    transform: translate(30%, 30%);
     transition: all 0.3s ease-in-out; /* Smooth transition for transformations */
     z-index: 1;
     box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.2), 0px 0px 10px rgba(0, 0, 0, 0.1)!important; /* Added shadow for depth */
@@ -46,13 +46,13 @@
 /* Animation for highlighting piece */
 @keyframes spin {
     0% {
-        transform: translate(18%, 16%) rotate(0deg);
+        transform: translate(30%, 30%) rotate(0deg);
     }
     50% {
-        transform: translate(18%, 16%) rotate(180deg) ; /* Slight scale effect */
+        transform: translate(30%, 30%) rotate(180deg) ; /* Slight scale effect */
     }
     100% {
-        transform: translate(18%, 16%) rotate(360deg);
+        transform: translate(30%, 30%) rotate(360deg);
     }
 }
 

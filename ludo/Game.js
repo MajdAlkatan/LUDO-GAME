@@ -99,10 +99,10 @@ export class Game {
 
         const distanceToHome = (player, position) => {
             const turningPoint = TURNING_POINTS[player];
-            if (position > turningPoint){
+            if (position > turningPoint) {
                 return 52 - Math.abs(turningPoint - position);
             }
-            else{
+            else {
                 return (turningPoint + 6) - position;
             }
         };
@@ -225,7 +225,6 @@ export class Game {
             const moves = this.getPossibleMoves(node.gameState, 'P1');
             moves.forEach(move => {
                 const newState = this.simulateMove(node.gameState, move, 'P1');
-                let dices = 0;
                 let value = this.chanceMove(
                     new AIDecisionNode(newState, node.depth + 1, true, node)
                 );
@@ -248,14 +247,7 @@ export class Game {
     * @param {AIDecisionNode} node
     */
     chanceMove(node) {
-        if ((node.depth >= AI_CONFIG.SEARCH_DEPTH) || this.stateIsOver(node.gameState)) {
-            let result = this.evaluateState(node.gameState);
-            console.log(`Chance node reached. Evaluation result: ${result}`);
-            console.log("\n--------------------------------");
 
-            return result;
-
-        }
         let expectedValue = 0;
         AI_CONFIG.ROLL_PROBABILITIES.forEach(
             (possibility, idx) => {
@@ -378,7 +370,7 @@ export class Game {
             );
             if (piece.position === HOME_POSITIONS[player])
                 piece.isHome = true;
-            
+
         }
         this.checkForKill(newState, piece, player);
 
@@ -390,10 +382,10 @@ export class Game {
      * @param {GameState} state 
      * @param {*} piece 
      */
-    checkForKill(state, piece, player){
+    checkForKill(state, piece, player) {
         let piecePos = piece.position;
         let opponent = 'P1';
-        if (player === 'P1'){
+        if (player === 'P1') {
             opponent = 'P2';
         }
         else {
@@ -401,13 +393,13 @@ export class Game {
         }
         let piecesInSamePosition = [];
         state.boardState[opponent].forEach(
-            ( piece ) => {
-                if ((piece.position === piecePos) && !SAFE_POSITIONS.includes(piece.position)){
+            (piece) => {
+                if ((piece.position === piecePos) && !SAFE_POSITIONS.includes(piece.position)) {
                     piecesInSamePosition.push(piece);
                 }
             }
         )
-        if (piecesInSamePosition.length !== 1){
+        if (piecesInSamePosition.length !== 1) {
             return false;
         }
         let killedPiece = piecesInSamePosition[0];
@@ -422,12 +414,28 @@ export class Game {
     onDiceClick() {
         const diceElement = document.querySelector('.dice-value');
         const DICE_ANIMATION_DURATION = 1000; //ms
-        const FRAME_DELAY = 80;
 
         UI.disableDice();
         // logic of dice rolling  
         this.diceValue = 1 + Math.floor(Math.random() * 6);
-
+        if (!this.testConsecutiveSixes) {
+            this.testConsecutiveSixes = 0; // Initialize test counter if not already set
+        }
+    
+        if (this.testConsecutiveSixes < 3) {
+            this.diceValue = 6; // Force a 6 roll for the test
+            this.testConsecutiveSixes += 1;
+        } else {
+            // Calculate the dice value based on the defined probability distribution
+            const rollProbabilities = AI_CONFIG.ROLL_PROBABILITIES; // [1/6, 1/6, 1/6, 1/6, 1/6, 1/6]
+            const cumulativeProbabilities = rollProbabilities.reduce((acc, prob, index) => {
+                acc.push((acc[index - 1] || 0) + prob);
+                return acc;
+            }, []);
+        
+            const randomValue = Math.random();
+            this.diceValue = cumulativeProbabilities.findIndex(cumProb => randomValue < cumProb) + 1;
+        }
         // Slot machine animation
         let startTime = Date.now();
         const animateDice = () => {
@@ -535,4 +543,29 @@ export class Game {
         const piece = target.getAttribute('piece');
         this.board.handlePieceClick(player, piece, this.diceValue, this);
     }
+    // In Game class's updatePiecePositions method:
+    // In Game class
+updatePiecePositions() {
+    PLAYERS.forEach(player => {
+      const positionsMap = new Map();
+  
+      // Group pieces by their current position
+      this.pieces[player].forEach((position, pieceIndex) => {
+        if (!positionsMap.has(position)) {
+          positionsMap.set(position, []);
+        }
+        positionsMap.get(position).push(pieceIndex);
+      });
+  
+      // Adjust positions for overlapping pieces
+      positionsMap.forEach((pieces, position) => {
+        if (pieces.length > 1) {
+          this.adjustOverlappingPositions(player, position, pieces);
+        } else {
+          // Single piece: center it
+          UI.setPiecePosition(player, pieces[0], position);
+        }
+      });
+    });
+  }
 }

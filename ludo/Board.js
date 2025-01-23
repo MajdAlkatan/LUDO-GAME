@@ -19,7 +19,7 @@ export class Board {
     getEligiblePieces(playerId, diceValue) {
         return this.players[playerId].getEligiblePieces(diceValue);
         // ح حسب قيمة النردid  هي بترجع القطع الممكنة للاعب الو 
-    }
+    } 
 
     handlePieceClick(playerId, pieceId, diceValue, game) {
         const player = this.players[playerId];
