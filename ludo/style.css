@@ -67,6 +67,7 @@
     box-shadow: 0px 0px 20px rgba(0, 0, 0, 0.4), 0px 0px 25px rgba(255, 255, 0, 0.3); /* Brighter shadow on hover */
     animation: spin 1s infinite linear;
     scale: calc(1.2);
+    z-index: 111;
 }
 
 /* Animation for highlighting piece */
