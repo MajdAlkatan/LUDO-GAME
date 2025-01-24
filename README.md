@@ -2,7 +2,6 @@
  🎲 Modern Ludo Game with AI Opponent
 A classic Ludo board game implementation featuring AI opponents, built with modern web technologies.
 
-![Game Preview](path_to_screenshot.png)
 
 ## ✨ Key Features
 - 🕹 Interactive UI with modern design
