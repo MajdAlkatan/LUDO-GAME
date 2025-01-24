@@ -45,7 +45,7 @@ A classic Ludo board game implementation featuring AI opponents, built with mode
 ```
 ludo-game/
 ├── assets/          # Media assets
-│   └── sounds/      # Sound effects
+│        
 ├── js/
 │   ├── Board.js     # Board management
 │   ├── Piece.js     # Piece movement logic
