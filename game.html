@@ -213,10 +213,7 @@
     </style>
 </head>
 <body>
-<!-- Add this in the <body> section -->
-<a id="demoLink" href="#" style="position: fixed; top: 10px; right: 10px; z-index: 1000; 
-           padding: 10px 20px; background: #2ecc71; color: white; text-decoration: none;
-           border-radius: 5px; font-weight: bold;">Play Live Demo</a>
+
     <div class="ludo-container">
         <div class="ludo">
             <div class="player-pieces">
@@ -1243,18 +1240,14 @@ export class UI {
     }
 }
 
-
-
 const game = new Game();
 
-
-
 // Add this at the end of your existing script
-document.getElementById('demoLink').addEventListener('click', (e) => {
-    e.preventDefault();
-    window.location.href = window.location.href; // Refresh to reset
-    new Game().resetGame();
-});
+// document.getElementById('demoLink').addEventListener('click', (e) => {
+//     e.preventDefault();
+//     window.location.href = window.location.href; // Refresh to reset
+//     new Game().resetGame();
+// });
 
     </script>
 </body>
