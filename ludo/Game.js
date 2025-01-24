@@ -417,15 +417,7 @@ export class Game {
 
         UI.disableDice();
         // logic of dice rolling  
-        this.diceValue = 1 + Math.floor(Math.random() * 6);
-        if (!this.testConsecutiveSixes) {
-            this.testConsecutiveSixes = 0; // Initialize test counter if not already set
-        }
-    
-        if (this.testConsecutiveSixes < 3) {
-            this.diceValue = 6; // Force a 6 roll for the test
-            this.testConsecutiveSixes += 1;
-        } else {
+        
             // Calculate the dice value based on the defined probability distribution
             const rollProbabilities = AI_CONFIG.ROLL_PROBABILITIES; // [1/6, 1/6, 1/6, 1/6, 1/6, 1/6]
             const cumulativeProbabilities = rollProbabilities.reduce((acc, prob, index) => {
@@ -435,7 +427,7 @@ export class Game {
         
             const randomValue = Math.random();
             this.diceValue = cumulativeProbabilities.findIndex(cumProb => randomValue < cumProb) + 1;
-        }
+        
         // Slot machine animation
         let startTime = Date.now();
         const animateDice = () => {
@@ -464,18 +456,18 @@ export class Game {
     handleDiceResult() {
         console.log(`Final dice value: ${this.diceValue}`);
 
-        // if (this.diceValue === 6) {
-        //     this.consecutiveSixes = (this.consecutiveSixes || 0) + 1;
-        // } else {
-        //     this.consecutiveSixes = 0;
-        // }
+        if (this.diceValue === 6) {
+            this.consecutiveSixes = (this.consecutiveSixes || 0) + 1;
+        } else {
+            this.consecutiveSixes = 0;
+        }
 
-        // if (this.consecutiveSixes === 3) {
-        //     console.log("Three 6s! Skipping turn.");
-        //     this.consecutiveSixes = 0;
-        //     this.incrementTurn();
-        //     return;
-        // }
+        if (this.consecutiveSixes === 3) {
+            console.log("Three 6s! Skipping turn.");
+            this.consecutiveSixes = 0;
+            this.incrementTurn();
+            return;
+        }
 
         this.state = STATE.DICE_ROLLED;
         this.checkForEligiblePieces();
