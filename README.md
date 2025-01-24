@@ -4,6 +4,9 @@ A classic Ludo board game implementation featuring AI opponents, built with mode
 
 [![Live Demo](https://img.shields.io/badge/PLAY%20DEMO-LIVE%20GAME-brightgreen?style=for-the-badge&logo=github)](https://majdalkatan.github.io/LUDO-GAME/game)
 
+## 🎮 Play Live Demo
+[Click here to play the live demo!](https://majdalkatan.github.io/LUDO-GAME/game)
+
 ## ✨ Key Features
 - 🕹 Interactive UI with modern design
 - 🤖 AI opponent with decision-making logic
