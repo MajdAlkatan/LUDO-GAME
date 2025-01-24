@@ -72,7 +72,7 @@ ludo-game/
 ## UI
 
 <div align="center">
-  <img src="" width="750" alt="Main Game Interface">
-  <img src="" width="750" alt="Main Game Interface">
-  <img src="./ludo-js/screenshots\Screenshot 2025-01-24 165359.png" width="750" alt="Main Game Interface">
+  <img src="./screenshots\Screenshot 2025-01-24 165329.png" width="750" alt="Main Game Interface">
+  <img src="./screenshots\Screenshot 2025-01-24 165341.png" width="750" alt="Main Game Interface">
+  <img src="./screenshots\Screenshot 2025-01-24 165359.png" width="750" alt="Main Game Interface">
 </div>
