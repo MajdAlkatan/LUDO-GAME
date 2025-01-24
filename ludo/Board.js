@@ -8,7 +8,7 @@ export class Board {
     constructor() {
         this.players = {
             P1: new Player('P1'),
-            P2: new Player('P2',true),
+            P2: new Player('P2'),
         };
     }
 

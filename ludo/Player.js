@@ -49,8 +49,16 @@ export class Player {
         const piece = this.getPiece(pieceId);
         piece.incrementPosition(diceValue, board, game);
     }
+
+
+    isAtHome() {
+        return this.pieces.position === HOME_POSITIONS[this.id];
+    }
     checkAllPiecesInHome() {
-        return this.pieces.every(piece => piece.position === HOME_POSITIONS[this.id]);
+        return this.pieces.every(piece =>
+            piece.position === HOME_POSITIONS[this.id] &&
+            !piece.isAtBase()
+        );
     }
 
 }

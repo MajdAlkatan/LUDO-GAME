@@ -464,18 +464,18 @@ export class Game {
     handleDiceResult() {
         console.log(`Final dice value: ${this.diceValue}`);
 
-        if (this.diceValue === 6) {
-            this.consecutiveSixes = (this.consecutiveSixes || 0) + 1;
-        } else {
-            this.consecutiveSixes = 0;
-        }
+        // if (this.diceValue === 6) {
+        //     this.consecutiveSixes = (this.consecutiveSixes || 0) + 1;
+        // } else {
+        //     this.consecutiveSixes = 0;
+        // }
 
-        if (this.consecutiveSixes === 3) {
-            console.log("Three 6s! Skipping turn.");
-            this.consecutiveSixes = 0;
-            this.incrementTurn();
-            return;
-        }
+        // if (this.consecutiveSixes === 3) {
+        //     console.log("Three 6s! Skipping turn.");
+        //     this.consecutiveSixes = 0;
+        //     this.incrementTurn();
+        //     return;
+        // }
 
         this.state = STATE.DICE_ROLLED;
         this.checkForEligiblePieces();

@@ -1,0 +1,1333 @@
+//----------------------------------------------------------------
+//----------------------------------------------------------------
+//----------------------------------------------------------------
+//----------------------------------------------------------------
+//----------------------------------------------------------------
+//----------------------------------------------------------------
+README : this is the structure to put the code in correct file 
+**you need to have open live server extintion in vsCode to play game in the Browser**
+/LUDO-JS
+|---|/ludo
+|   |-----|
+|         |-- Board.js # إدارة لوحة اللعبة
+|         |-- Game.js #و المنطق الرئيسي للعبة و الخوارزمية
+|         |-- Player.js # تمثيل اللاعبين
+|         |-- Piece.js # إدارة القطع 
+|         |-- constants.js # الثوابت والإعدادات
+|         |-- UI.js # إدارة الواجهة الرسومية
+|         |-- node.js # عقد  الشجرة 
+|         |-- state.js # تمثيل حالة اللعبة
+|         |-- Style.css 
+|-- main.js #################################
+|-- index.html #################################
+//----------------------------------------------------------------
+//----------------------------------------------------------------
+//----------------------------------------------------------------
+//----------------------------------------------------------------
+//----------------------------------------------------------------
+//----------------------------------------------------------------
+
+// Board.js
+import { Player } from './Player.js';
+import {STATE, BASE_POSITIONS, SAFE_POSITIONS } from './constants.js';
+import { UI } from './UI.js';
+
+export class Board {
+    players;
+
+    constructor() {
+        this.players = {
+            P1: new Player('P1'),
+            P2: new Player('P2',true),
+        };
+    }
+
+    resetPositions() {
+        Object.values(this.players).forEach(player => player.resetPieces());
+    }
+
+    getEligiblePieces(playerId, diceValue) {
+        return this.players[playerId].getEligiblePieces(diceValue);
+        // ح حسب قيمة النردid  هي بترجع القطع الممكنة للاعب الو 
+    }
+
+    handlePieceClick(playerId, pieceId, diceValue, game) {
+        const player = this.players[playerId];
+        
+        if (pieceId < 0 || pieceId > 3) {
+            console.error('Invalid piece ID:', pieceId);
+            game.incrementTurn();
+            return;
+        }
+    
+        const piece = player.getPiece(pieceId);
+    
+        if (!piece) {
+            console.error('Piece not found:', pieceId);
+            game.incrementTurn();
+            return;
+        }
+    
+        if (piece.isAtBase()) {
+            player.movePieceToStart(pieceId);
+            game.state = STATE.DICE_NOT_ROLLED;
+            return;
+        }
+    
+        UI.unhighlightPieces();
+        player.movePieceBy(pieceId, diceValue, this, game);
+    }
+
+    checkForKill(playerId, pieceId) {
+        const currentPlayer = this.players[playerId];
+        const currentPiece = currentPlayer.getPiece(pieceId);
+        const currentPosition = currentPiece.position;
+
+        const opponentId = playerId === 'P1' ? 'P2' : 'P1';
+        const opponent = this.players[opponentId];
+
+        let kill = false;
+
+        opponent.pieces.forEach(opponentPiece => {
+            if (
+                opponentPiece.position === currentPosition && 
+                !SAFE_POSITIONS.includes(currentPosition) 
+            ) {
+                opponentPiece.setPosition(BASE_POSITIONS[opponentId][opponentPiece.id]);
+                kill = true;
+            }
+        });
+
+        return kill;
+    }
+}
+
+//----------------------------------------------------------------
+//----------------------------------------------------------------
+
+//constant.js
+export const COORDINATES_MAP = {
+    0: [6, 13],
+    1: [6, 12],
+    2: [6, 11],
+    3: [6, 10],
+    4: [6, 9],
+    5: [5, 8],
+    6: [4, 8],
+    7: [3, 8],
+    8: [2, 8],
+    9: [1, 8],
+    10: [0, 8],
+    11: [0, 7],
+    12: [0, 6],
+    13: [1, 6],
+    14: [2, 6],
+    15: [3, 6],
+    16: [4, 6],
+    17: [5, 6],
+    18: [6, 5],
+    19: [6, 4],
+    20: [6, 3],
+    21: [6, 2],
+    22: [6, 1],
+    23: [6, 0],
+    24: [7, 0],
+    25: [8, 0],
+    26: [8, 1],
+    27: [8, 2],
+    28: [8, 3],
+    29: [8, 4],
+    30: [8, 5],
+    31: [9, 6],
+    32: [10, 6],
+    33: [11, 6],
+    34: [12, 6],
+    35: [13, 6],
+    36: [14, 6],
+    37: [14, 7],
+    38: [14, 8],
+    39: [13, 8],
+    40: [12, 8],
+    41: [11, 8],
+    42: [10, 8],
+    43: [9, 8],
+    44: [8, 9],
+    45: [8, 10],
+    46: [8, 11],
+    47: [8, 12],
+    48: [8, 13],
+    49: [8, 14],
+    50: [7, 14],
+    51: [6, 14],
+
+    // HOME ENTRANCE
+
+    // P1
+    100: [7, 13],
+    101: [7, 12],
+    102: [7, 11],
+    103: [7, 10],
+    104: [7, 9],
+    105: [7, 8],
+
+    // P2
+    200: [7, 1],
+    201: [7, 2],
+    202: [7, 3],
+    203: [7, 4],
+    204: [7, 5],
+    205: [7, 6],
+
+    // BASE POSITIONS
+
+    // P1
+    500: [1.5, 10.58],
+    501: [3.57, 10.58],
+    502: [1.5, 12.43],
+    503: [3.57, 12.43],
+
+    // P2
+    600: [10.5, 1.58],
+    601: [12.54, 1.58],
+    602: [10.5, 3.45],
+    603: [12.54, 3.45],
+};
+
+export const STEP_LENGTH = 6.66;
+
+export const PLAYERS = ['P1', 'P2'];
+
+export const BASE_POSITIONS = {
+    P1: [500, 501, 502, 503],
+    P2: [600, 601, 602, 603],
+}
+
+export const START_POSITIONS = {
+    P1: 0,
+    P2: 26
+}
+
+export const HOME_ENTRANCE = {
+    P1: [100, 101, 102, 103, 104],
+    P2: [200, 201, 202, 203, 204]
+}
+
+export const HOME_POSITIONS = {
+    P1: 105,
+    P2: 205
+}
+
+export const TURNING_POINTS = {
+    P1: 50,
+    P2: 24
+}
+
+export const SAFE_POSITIONS = [0, 8, 13, 21, 26, 34, 39, 47];
+
+export const STATE = {
+    DICE_NOT_ROLLED: 'DICE_NOT_ROLLED',
+    DICE_ROLLED: 'DICE_ROLLED',
+}
+export const AI_CONFIG = {
+    SEARCH_DEPTH: 3,
+    BRANCH_LIMIT: 4,
+    ROLL_PROBABILITIES: [1/6, 1/6, 1/6, 1/6, 1/6, 1/6]
+};
+
+//----------------------------------------------------------------
+//----------------------------------------------------------------
+
+//Game.js
+import {
+    STATE,
+    PLAYERS,
+    AI_CONFIG,
+    HOME_ENTRANCE,
+    SAFE_POSITIONS,
+    HOME_POSITIONS,
+    TURNING_POINTS,
+    START_POSITIONS,
+    BASE_POSITIONS
+
+} from './constants.js';
+import { UI } from './UI.js';
+import { Board } from './Board.js';
+
+import GameState from './State.js';
+import { AIDecisionNode } from './node.js';
+
+
+
+export class Game {
+    board;
+    _diceValue;
+    _turn;
+    _state;
+
+
+    constructor() {
+        this.board = new Board();
+        this.listenDiceClick();
+        this.listenResetClick();
+        this.listenPieceClick();
+        this.resetGame();
+    }
+
+
+    get diceValue() {
+        return this._diceValue;
+    }
+    set diceValue(value) {
+        this._diceValue = value;
+        UI.setDiceValue(value);
+    }
+
+    get turn() {
+        return this._turn;
+    }
+    set turn(value) {
+        this._turn = value;
+        UI.setTurn(value);
+    }
+
+    get state() {
+        return this._state;
+    }
+    set state(value) {
+        this._state = value;
+
+        if (value === STATE.DICE_NOT_ROLLED) {
+            UI.enableDice();
+            UI.unhighlightPieces();
+        } else {
+            UI.disableDice();
+        }
+        if (this._state === STATE.DICE_NOT_ROLLED) {
+            const currentPlayerId = PLAYERS[this.turn];
+            const currentPlayer = this.board.players[currentPlayerId];
+            if (currentPlayer?.isComputer) {
+                setTimeout(() => this.onDiceClick(), 1000);
+            }
+        }
+    }
+
+    getCurrentGameState() {
+        return new GameState(
+            {
+                P1: this.board.players.P1.getPieceStates(),
+                P2: this.board.players.P2.getPieceStates()
+            },
+            this.turn,
+            this.diceValue
+        );
+    }
+    evaluateState(gameState) {
+        // Computer is P2
+        let score = 0;
+        const computerPieces = gameState.boardState.P2;
+        const humanPieces = gameState.boardState.P1;
+
+        console.log("Evaluating state:");
+        console.log("\n--------------------------------");
+
+        console.log(`Computer pieces: ${JSON.stringify(computerPieces)}`);
+        console.log("\n--------------------------------");
+
+        console.log(`Human pieces: ${JSON.stringify(humanPieces)}`);
+        console.log("\n--------------------------------");
+
+        const distanceToHome = (player, position) => {
+            const turningPoint = TURNING_POINTS[player];
+            if (position > turningPoint){
+                return 52 - Math.abs(turningPoint - position);
+            }
+            else{
+                return (turningPoint + 6) - position;
+            }
+        };
+
+        computerPieces.forEach(p => {
+            if (!p.isHome) {
+                const distance = distanceToHome('P2', p.position);
+                score += (52 - distance) * 10;
+                if (SAFE_POSITIONS.includes(p.position)) {
+                    score += 50;
+                }
+            } else {
+                score += 1000;
+            }
+        });
+
+        humanPieces.forEach(p => {
+            if (!p.isHome) {
+                const distance = distanceToHome('P1', p.position);
+                score -= (52 - distance) * 8;
+                if (SAFE_POSITIONS.includes(p.position)) {
+                    score -= 50;
+                }
+            }
+            else {
+                score -= 500;
+            }
+        });
+
+        const nearHomeBonus = (pieces, player) => {
+            const homeEntrance = HOME_ENTRANCE[player];
+            return pieces.reduce((bonus, p) => {
+                if (homeEntrance.includes(p.position)) {
+                    bonus += 100;
+                }
+                return bonus;
+            }, 0);
+        };
+
+        score += nearHomeBonus(computerPieces, 'P2');
+        score -= nearHomeBonus(humanPieces, 'P1');
+
+        console.log(`Evaluation score: ${score}`);
+        console.log("\n--------------------------------");
+
+        return score;
+    }
+
+    /**
+     * 
+     * @param {GameState} state 
+     */
+    stateIsOver(state) {
+        let isOver = false;
+        let count = 0;
+        state.boardState.P1.forEach(
+            piece => {
+                if (piece.isHome) {
+                    count++;
+                    if (count === 4) {
+                        isOver = true;
+                    }
+                }
+            });
+        count = 0;
+        state.boardState.P2.forEach(
+            piece => {
+                if (piece.isHome) {
+                    count++;
+                    if (count === 4) {
+                        isOver = true;
+                    }
+                }
+            });
+        return isOver;
+    }
+
+    /**
+     * 
+     * @param {AIDecisionNode} node 
+     * @returns 
+     */
+    expectimax(node) {
+        console.log(`Processing node at depth ${node.depth}, isComputerTurn: ${node.isComputerTurn}`);
+        console.log("\n--------------------------------");
+
+        if ((node.depth >= AI_CONFIG.SEARCH_DEPTH) || this.stateIsOver(node.gameState)) {
+            let result = this.evaluateState(node.gameState);
+            console.log(`Leaf node reached. Evaluation result: ${result}`);
+            console.log("\n--------------------------------");
+
+            return result;
+        }
+
+        if (node.isComputerTurn) {
+            let maxValue = -Infinity;
+            const moves = this.getPossibleMoves(node.gameState, 'P2');
+
+
+            // moves.slice(0, AI_CONFIG.BRANCH_DEPTH)
+            moves.forEach(move => {
+
+                const newState = this.simulateMove(node.gameState, move, 'P2');
+
+                let value = this.chanceMove(
+                    new AIDecisionNode(newState, node.depth + 1, false, node)
+                );
+                console.log(`Computer move: ${JSON.stringify(move)}, Value: ${value}`);
+                console.log("\n--------------------------------");
+
+                maxValue = Math.max(maxValue, value);
+
+            });
+            console.log(`Max value for computer: ${maxValue}`);
+            console.log("\n--------------------------------");
+
+            return maxValue;
+        } else {
+            let minValue = Infinity;
+            const moves = this.getPossibleMoves(node.gameState, 'P1');
+            moves.forEach(move => {
+                const newState = this.simulateMove(node.gameState, move, 'P1');
+                let value = this.chanceMove(
+                    new AIDecisionNode(newState, node.depth + 1, true, node)
+                );
+
+                console.log(`Human move: ${JSON.stringify(move)}, Value: ${value}`);
+                console.log("\n--------------------------------");
+
+
+                minValue = Math.min(minValue, value);
+            });
+            console.log(`Min value for human: ${minValue}`);
+            console.log("\n--------------------------------");
+
+
+            return minValue;
+        }
+    }
+
+    /**
+    * @param {AIDecisionNode} node
+    */
+    chanceMove(node) {
+    
+        let expectedValue = 0;
+        AI_CONFIG.ROLL_PROBABILITIES.forEach(
+            (possibility, idx) => {
+                let state = node.gameState.clone();
+                const diceValue = idx + 1;
+                state.diceValue = diceValue;
+
+                let value = this.expectimax(
+                    new AIDecisionNode(state, node.depth, node.isComputerTurn, node)
+                );
+                console.log(`Dice roll: ${diceValue}, Probability: ${possibility}, Value: ${value}`);
+                console.log("\n--------------------------------");
+                if (Number.isFinite(value)) {
+                    expectedValue += value * possibility;
+                }
+            }
+        )
+        console.log(`Expected value: ${expectedValue}`);
+        console.log("\n--------------------------------");
+
+        return expectedValue;
+    }
+    getPossibleMoves(gameState, playerId) {
+        const currentPositions = gameState.boardState[playerId];
+
+        return currentPositions
+            .map((piece, idx) => ({
+                pieceId: idx,
+                eligible: this.isPieceEligible(piece, gameState.diceValue)
+            }))
+            .filter(p => p.eligible)
+            .map(p => p.pieceId);
+    }
+
+    getBestComputerMove() {
+        // returns the current game state
+        const originalState = this.getCurrentGameState();
+        // returns all possible movable pieces for computer
+        const possibleMoves = this.getPossibleMoves(originalState, 'P2');
+
+
+        // Return null if no valid moves
+        if (!possibleMoves || possibleMoves.length === 0) {
+            console.log("No valid moves for computer.");
+            console.log("\n--------------------------------");
+
+            return null;
+        }
+
+        let bestMove = possibleMoves[0];
+        let bestValue = -Infinity;
+
+        possibleMoves.forEach(move => {
+            const newState = this.simulateMove(originalState, move, 'P2');
+            const node = new AIDecisionNode(newState, 0, false);
+            const value = this.expectimax(node);
+            console.log(`Evaluating move: ${move}, Value: ${value}`);
+            console.log("\n--------------------------------");
+
+
+            if (value > bestValue) {
+                bestValue = value;
+                bestMove = move;
+            }
+        });
+
+        console.log("best move value  " + bestValue);
+        console.log("\n--------------------------------");
+        console.log("\n--------------------------------");
+
+        console.log("node number :", AIDecisionNode.nodeNumber);
+        console.log("\n--------------------------------");
+        console.log("\n--------------------------------");
+
+
+        AIDecisionNode.nodeNumber = 0;
+        console.log("\n--------------------------------");
+        console.log("\n--------------------------------");
+
+        console.log(`Best move: ${bestMove}, Best value: ${bestValue}`);
+        console.log("\n--------------------------------");
+        console.log("\n--------------------------------");
+
+
+        return bestMove;
+    }
+    isPieceEligible(pieceState, diceValue) {
+
+        if (pieceState.isHome) return false;
+        if (pieceState.isAtBase && diceValue !== 6) return false;
+
+        const playerId = 'P2';
+        const homeEntrance = HOME_ENTRANCE[playerId];
+        if (homeEntrance.includes(pieceState.position)) {
+            const remainingSteps = HOME_POSITIONS[playerId] - pieceState.position;
+            if (diceValue > remainingSteps) return false;
+        }
+
+        return true;
+    }
+    simulateMove(originalState, pieceId, player) {
+        const newState = originalState.clone();
+        const piece = newState.boardState[player][pieceId];
+
+        if (piece.isAtBase) {
+            piece.position = START_POSITIONS[player];
+            piece.isAtBase = false;
+        } else {
+            let newPosition = piece.position + newState.diceValue;
+            if (newPosition > 51) {
+                newPosition = newPosition - 52;
+            }
+            if (newPosition > TURNING_POINTS[player]) {
+                let diff = newPosition - TURNING_POINTS[player]
+                newPosition = HOME_ENTRANCE[player][0] + diff;
+            }
+            piece.position = Math.min(
+                newPosition,
+                HOME_POSITIONS[player]
+            );
+            if (piece.position === HOME_POSITIONS[player])
+                piece.isHome = true;
+            
+        }
+        this.checkForKill(newState, piece, player);
+
+        return newState;
+    }
+
+    /**
+     * 
+     * @param {GameState} state 
+     * @param {*} piece 
+     */
+    checkForKill(state, piece, player){
+        let piecePos = piece.position;
+        let opponent = 'P1';
+        if (player === 'P1'){
+            opponent = 'P2';
+        }
+        else {
+            opponent = 'P1';
+        }
+        let piecesInSamePosition = [];
+        state.boardState[opponent].forEach(
+            ( piece ) => {
+                if ((piece.position === piecePos) && !SAFE_POSITIONS.includes(piece.position)){
+                    piecesInSamePosition.push(piece);
+                }
+            }
+        )
+        if (piecesInSamePosition.length !== 1){
+            return false;
+        }
+        let killedPiece = piecesInSamePosition[0];
+        killedPiece.position = BASE_POSITIONS[opponent][killedPiece.id]
+        return true;
+    }
+
+    listenDiceClick() {
+        UI.listenDiceClick(this.onDiceClick.bind(this));
+    }
+
+    onDiceClick() {
+        const diceElement = document.querySelector('.dice-value');
+        const DICE_ANIMATION_DURATION = 1000; //ms
+        const FRAME_DELAY = 80;
+
+        UI.disableDice();
+        // logic of dice rolling  
+        this.diceValue = 1 + Math.floor(Math.random() * 6);
+
+        // Slot machine animation
+        let startTime = Date.now();
+        const animateDice = () => {
+            const elapsed = Date.now() - startTime;
+            const progress = elapsed / DICE_ANIMATION_DURATION;
+
+            if (progress < 1) {
+                // Generate random value during animation
+                const tempValue = Math.floor(Math.random() * 6) + 1;
+                diceElement.textContent = tempValue;
+                requestAnimationFrame(animateDice);
+            } else {
+                // Set final value
+                diceElement.textContent = this.diceValue;
+                diceElement.classList.remove('rolling');
+                UI.enableDice();
+
+                // Handle dice logic
+                this.handleDiceResult();
+            }
+        };
+
+        requestAnimationFrame(animateDice);
+    }
+
+    handleDiceResult() {
+        console.log(`Final dice value: ${this.diceValue}`);
+
+        if (this.diceValue === 6) {
+            this.consecutiveSixes = (this.consecutiveSixes || 0) + 1;
+        } else {
+            this.consecutiveSixes = 0;
+        }
+
+        if (this.consecutiveSixes === 3) {
+            console.log("Three 6s! Skipping turn.");
+            this.consecutiveSixes = 0;
+            this.incrementTurn();
+            return;
+        }
+
+        this.state = STATE.DICE_ROLLED;
+        this.checkForEligiblePieces();
+    }
+
+
+    incrementTurn() {
+        this.turn = this.turn === 0 ? 1 : 0; // Switch turns
+        this.state = STATE.DICE_NOT_ROLLED; // Reset state
+        console.log(`Turn changed! It's now player ${this.turn === 0 ? 'P1' : 'P2'}'s turn.`);
+    }
+
+
+
+    checkForEligiblePieces() {
+
+        const playerId = PLAYERS[this.turn]; // 'P1' أو 'P2' يعني هون 
+        const player = this.board.players[playerId]; // P1 أو P2 عم جيب الاوبجيكت لاعب يلي هو يا 
+        const eligiblePieces = this.board.getEligiblePieces(playerId, this.diceValue);
+
+        if (eligiblePieces.length) {
+            if (player.isComputer) {
+                setTimeout(() => {
+                    const pieceId = this.getBestComputerMove();
+                    if (pieceId !== null && pieceId >= 0 && pieceId <= 3) {
+                        this.board.handlePieceClick(playerId, pieceId, this.diceValue, this);
+                    } else {
+                        this.incrementTurn();
+                    }
+                }, 1000);
+            } else {
+                UI.highlightPieces(playerId, eligiblePieces);
+            }
+        } else {
+            this.incrementTurn();
+        }
+    }
+
+
+
+    listenResetClick() {
+        UI.listenResetClick(this.resetGame.bind(this));
+    }
+
+    resetGame() {
+        console.log('reset game');
+        this.board.resetPositions();
+        this.turn = 0;
+        this.state = STATE.DICE_NOT_ROLLED;
+    }
+
+    listenPieceClick() {
+        UI.listenPieceClick(this.onPieceClick.bind(this));
+    }
+
+    onPieceClick(event) {
+        const target = event.target;
+
+        if (!target.classList.contains('player-piece') || !target.classList.contains('highlight')) {
+            return;
+        }
+        console.log('piece clicked');
+
+        const player = target.getAttribute('player-id');
+        const piece = target.getAttribute('piece');
+        this.board.handlePieceClick(player, piece, this.diceValue, this);
+    }
+}
+
+//----------------------------------------------------------------
+//----------------------------------------------------------------
+
+//node.js
+class AIDecisionNode {
+    static nodeNumber = 0;
+
+    constructor(gameState, depth, isComputerTurn, parentNode = null) {
+        this.gameState = gameState;
+        this.depth = depth;
+        this.isComputerTurn = isComputerTurn;
+        this.parentNode = parentNode;
+        AIDecisionNode.nodeNumber++;
+    }
+}
+export { AIDecisionNode }
+//----------------------------------------------------------------
+//----------------------------------------------------------------
+
+// Piece.js
+import { STATE ,BASE_POSITIONS, HOME_POSITIONS, TURNING_POINTS, HOME_ENTRANCE, SAFE_POSITIONS } from './constants.js';
+import {UI} from './UI.js'
+export class Piece {
+    playerId;
+    id;
+    position;
+
+    constructor(playerId, id) {
+        this.playerId = playerId;
+        this.id = id;
+        this.reset();
+    }
+
+    reset() {
+        this.position = BASE_POSITIONS[this.playerId][this.id];
+        UI.setPiecePosition(this.playerId, this.id, this.position);
+    }
+
+    isEligibleToMove(diceValue) {
+        if (this.position === HOME_POSITIONS[this.playerId]) {
+            return false;
+        }
+
+        if (BASE_POSITIONS[this.playerId].includes(this.position) && diceValue !== 6) {
+            return false;
+        }
+
+        if (
+            HOME_ENTRANCE[this.playerId].includes(this.position) &&
+            diceValue > HOME_POSITIONS[this.playerId] - this.position
+        ) {
+            return false;
+        }
+
+        return true;
+    }
+
+    isAtBase() {
+        return BASE_POSITIONS[this.playerId].includes(this.position);
+    }
+
+    setPosition(newPosition) {
+        this.position = newPosition;
+        UI.setPiecePosition(this.playerId, this.id, newPosition);
+    }
+
+    incrementPosition(diceValue, board, game) {
+        let moveBy = diceValue;
+        console.log("Old position: " + this.position)
+        console.log("Move by: " + moveBy);
+        
+        const interval = setInterval(() => {
+            this.position = this.getNextPosition();
+            UI.setPiecePosition(this.playerId, this.id, this.position);
+            moveBy--;
+    
+            if (moveBy === 0) {
+                clearInterval(interval);
+    
+
+                const isKill = board.checkForKill(this.playerId, this.id);
+    
+                if (isKill || diceValue === 6) {
+                    game.state = STATE.DICE_NOT_ROLLED;
+                    return;
+                }
+    
+                if (board.players[this.playerId].checkAllPiecesInHome()) { 
+                    alert(`Player ${this.playerId} wins!`);
+                    game.resetGame();
+                    return;
+                }
+    
+                game.incrementTurn();
+            }
+        }, 200);
+    }
+    
+    
+    
+
+    getNextPosition() {
+        if (this.position === TURNING_POINTS[this.playerId]) {
+            return HOME_ENTRANCE[this.playerId][0];
+        } else if (this.position === 51) {
+            return 0;
+        }
+        return this.position + 1;
+    }
+}
+//----------------------------------------------------------------
+//----------------------------------------------------------------
+
+// Player.js
+import { Piece } from './Piece.js';
+import { HOME_POSITIONS, BASE_POSITIONS, START_POSITIONS } from './constants.js';
+
+export class Player {
+    id;
+    isComputer;
+    pieces;
+
+    constructor(id, isComputer = false) {
+        this.id = id;
+        this.isComputer = isComputer;
+        this.pieces = [0, 1, 2, 3].map(pieceId => new Piece(this.id, pieceId));
+    }
+
+    resetPieces() {
+        this.pieces.forEach(piece => piece.reset());
+    }
+    getPieceStates() {
+        return this.pieces.map(piece => ({
+            position: piece.position,
+            isAtBase: piece.isAtBase(),
+            isHome: piece.position === HOME_POSITIONS[this.id],
+            playerId: piece.playerId,
+            id: piece.id,
+        }));
+    }
+    // getPieceStates() {
+    //     return this.pieces.map(piece => ({
+    //         ...piece
+    //     }));
+    // }
+    getPiece(pieceId) {
+        return this.pieces[pieceId];
+    }
+
+    getEligiblePieces(diceValue) {
+        return this.pieces
+            .filter(piece => piece.isEligibleToMove(diceValue))
+            .map(piece => piece.id);
+    }
+
+    movePieceToStart(pieceId) {
+        const piece = this.getPiece(pieceId);
+        piece.setPosition(START_POSITIONS[this.id]);
+    }
+
+    movePieceBy(pieceId, diceValue, board, game) {
+        const piece = this.getPiece(pieceId);
+        piece.incrementPosition(diceValue, board, game);
+    }
+    checkAllPiecesInHome() {
+        return this.pieces.every(piece => piece.position === HOME_POSITIONS[this.id]);
+    }
+
+}
+//----------------------------------------------------------------
+//----------------------------------------------------------------
+
+//state.js
+class GameState {
+    constructor(boardState, turn, diceValue) {
+        this.boardState = boardState;
+        this.turn = turn;
+        this.diceValue = diceValue;
+        this.score = null;
+    }
+
+    clone() {
+        const clonedBoard = {
+            P1: [...this.boardState.P1],
+            P2: [...this.boardState.P2]
+        };
+        this.cloneBoard(clonedBoard);
+        return new GameState(clonedBoard, this.turn, this.diceValue);
+    }
+    cloneBoard(board) {
+        board.P1.map(piece => {
+            return {
+                position: piece.position,
+                isAtBase: piece.isAtBase,
+                isHome: piece.isHome,
+                playerId: piece.playerId,
+                id: piece.id,
+            };
+        });
+        board.P2.map(piece => {
+            return {
+                position: piece.position,
+                isAtBase: piece.isAtBase,
+                isHome: piece.isHome,
+                playerId: piece.playerId,
+                id: piece.id,
+            };
+        });
+    }
+}
+
+export default GameState;
+//----------------------------------------------------------------
+//----------------------------------------------------------------
+
+
+//ui.js
+import { COORDINATES_MAP, PLAYERS, STEP_LENGTH } from './constants.js';
+
+const diceButtonElement = document.querySelector('#dice-btn');
+const playerPiecesElements = {
+    P1: document.querySelectorAll('[player-id="P1"].player-piece'),
+    P2: document.querySelectorAll('[player-id="P2"].player-piece'),
+}
+
+export class UI {
+    static listenDiceClick(callback) {
+        diceButtonElement.addEventListener('click', callback);
+    }
+
+    static listenResetClick(callback) {
+        document.querySelector('button#reset-btn').addEventListener('click', callback)
+    }
+
+    static listenPieceClick(callback) {
+        document.querySelector('.player-pieces').addEventListener('click', callback)
+    }
+
+    /**
+     * 
+     * @param {string} player 
+     * @param {Number} piece 
+     * @param {Number} newPosition 
+     */
+    static setPiecePosition(player, piece, newPosition) {
+        if(!playerPiecesElements[player] || !playerPiecesElements[player][piece]) {
+            console.error(`Player element of given player: ${player} and piece: ${piece} not found`)
+            return;
+        }
+
+        const [x, y] = COORDINATES_MAP[newPosition];
+
+        const pieceElement = playerPiecesElements[player][piece];
+        pieceElement.style.top = y * STEP_LENGTH + '%';
+        pieceElement.style.left = x * STEP_LENGTH + '%';
+    }
+
+    static setTurn(index) {
+        if(index < 0 || index >= PLAYERS.length) {
+            console.error('index out of bound!');
+            return;
+        }
+        
+        const player = PLAYERS[index];
+
+        // Display player ID
+        document.querySelector('.active-player span').innerText = player;
+
+        const activePlayerBase = document.querySelector('.player-base.highlight');
+        if(activePlayerBase) {
+            activePlayerBase.classList.remove('highlight');
+        }
+        // highlight
+        document.querySelector(`[player-id="${player}"].player-base`).classList.add('highlight')
+    }
+
+    static enableDice() {
+        diceButtonElement.removeAttribute('disabled');
+    }
+
+    static disableDice() {
+        diceButtonElement.setAttribute('disabled', '');
+    }
+
+    /**
+     * 
+     * @param {string} player 
+     * @param {Number[]} pieces 
+     */
+    static highlightPieces(player, pieces) {
+        pieces.forEach(piece => {
+            const pieceElement = playerPiecesElements[player][piece];
+            pieceElement.classList.add('highlight');
+        })
+    }
+
+    static unhighlightPieces() {
+        document.querySelectorAll('.player-piece.highlight').forEach(ele => {
+            ele.classList.remove('highlight');
+        })
+    }
+
+    static setDiceValue(value) {
+        document.querySelector('.dice-value').innerText = value;
+    }
+}
+//----------------------------------------------------------------
+//----------------------------------------------------------------
+//main.js
+import { Game } from './ludo/Game.js';
+
+const game = new Game();
+
+
+//----------------------------------------------------------------
+//----------------------------------------------------------------
+//style.css
+* {
+    box-sizing: border-box;
+}
+
+.ludo-container {
+    width: 450px;
+    margin: 20px auto;
+}
+
+.ludo-container .ludo {
+
+    height: 450px;
+    width: 100%;
+    background-image: url('./ludo-bg.jpg');
+    background-size: contain;
+    position: relative;
+}
+
+.player-pieces {
+    height: 100%;
+    width: 100%;
+    position: relative;
+}
+
+.player-piece {
+    width: 5%; /* Adjusted size for better visibility */
+    height: 5%; /* Adjusted size for better visibility */
+    border-radius: 50%; /* Full circle shape */
+    position: absolute;
+    transform: translate(18%, 16%);
+    transition: all 0.3s ease-in-out; /* Smooth transition for transformations */
+    z-index: 1;
+    box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.2), 0px 0px 10px rgba(0, 0, 0, 0.1)!important; /* Added shadow for depth */
+    background: linear-gradient(145deg, #ffffff, #dcdcdc); /* Subtle gradient effect */
+}
+
+/* Highlighted piece with an interactive effect */
+.player-piece.highlight {
+    cursor: pointer;
+    border: 2px dashed rgb(255, 255, 255); /* More subtle dashed border */
+    background: linear-gradient(145deg, #fffae3, #ffe09d); /* Lighter background to indicate selection */
+    box-shadow: 0px 0px 20px rgba(0, 0, 0, 0.4), 0px 0px 25px rgba(255, 255, 0, 0.3); /* Brighter shadow on hover */
+    animation: spin 1s infinite linear;
+}
+
+/* Animation for highlighting piece */
+@keyframes spin {
+    0% {
+        transform: translate(18%, 16%) rotate(0deg);
+    }
+    50% {
+        transform: translate(18%, 16%) rotate(180deg) ; /* Slight scale effect */
+    }
+    100% {
+        transform: translate(18%, 16%) rotate(360deg);
+    }
+}
+
+/* Player 1 piece styling */
+[player-id="P1"].player-piece {
+    background-color: #2eafff; /* Light blue */
+    background: linear-gradient(145deg, #2e46ff, #2a1bce); /* Gradient for more dimension */
+    box-shadow: 0px 6px 12px rgba(46, 175, 255, 0.3); /* Subtle shadow for depth */
+}
+
+/* Player 2 piece styling */
+[player-id="P2"].player-piece {
+    background-color: #00b550; /* Bright green */
+    background: linear-gradient(145deg, #8cff00, #579e00); /* Gradient for more dimension */
+    box-shadow: 0px 6px 12px rgba(0, 181, 80, 0.3); /* Subtle shadow for depth */
+}
+
+
+
+.player-base {
+    width: 40%;
+    height: 40%;
+    border: 30px solid;
+    position: absolute;
+}
+
+.player-bases [player-id="P1"].player-base {
+    bottom: 0;
+    left: 0;
+    border-color: #1295e7;
+}
+
+.player-bases [player-id="P2"].player-base {
+    top: 0;
+    right: 0;
+    border-color: #049645;
+}
+
+.player-base.highlight {
+    animation: border-blink .7s infinite ease-in-out;
+}
+
+@keyframes border-blink {
+    50% {
+        border-color: rgba(255, 255, 255, 0.8);
+    }
+}
+
+.btn {
+    padding: 8px 20px;
+    border: none;
+    cursor: pointer;
+    font-size: 16px;
+}
+
+.btn:disabled {
+    opacity: 0.5;
+}
+.btn-reset{
+    background: linear-gradient(145deg, #ffcccc, #8d8d8d); 
+    color: white;
+    font-size: 16px;
+    font-weight: bold;
+    padding: 12px 24px;
+    border: none;
+    border-radius: 8px; 
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2); 
+    cursor: pointer;
+    transition: all 0.3s ease; 
+    text-transform: uppercase; 
+}
+
+.btn-dice {
+    background: linear-gradient(145deg, #00b34a, #008c3a); 
+    color: white;
+    font-size: 16px;
+    font-weight: bold;
+    padding: 12px 24px; 
+    border: none;
+    border-radius: 8px; 
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2); 
+    cursor: pointer;
+    transition: all 0.3s ease; 
+    text-transform: uppercase; 
+}
+
+
+
+
+.row {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 15px;
+}
+
+.dice-value {
+    font-size: 30px; /* Make the dice value larger for the slot machine effect */
+    font-weight: bold;
+    display: inline-block; /* To apply animation and transform */
+    text-align: center;
+    animation: slotMachineSpin 1s cubic-bezier(0.25, 0.8, 0.25, 1), fadeIn 0.5s ease-out; /* Slot machine spin + fade-in */
+    position: relative;
+}
+
+/* Rapid spinning effect for slot machine */
+@keyframes slotMachineSpin {
+    0% {
+        transform: translateY(0) rotate(0deg);
+    }
+    25% {
+        transform: translateY(-100%) rotate(180deg); /* Start spinning */
+    }
+    50% {
+        transform: translateY(-200%) rotate(360deg); /* Faster spinning */
+    }
+    75% {
+        transform: translateY(-300%) rotate(540deg); /* Slower spinning */
+    }
+    100% {
+        transform: translateY(0) rotate(720deg); /* Settling to final position */
+    }
+}
+
+/* Fade-in effect for smooth appearance */
+@keyframes fadeIn {
+    0% {
+        opacity: 0;
+    }
+    100% {
+        opacity: 1;
+    }
+}
+
+/* Optional: Add a glow effect when the dice value is updated */
+.dice-value.rolling {
+    animation: glow 0.5s ease-in-out;
+}
+
+@keyframes glow {
+    0% {
+        text-shadow: 0 0 10px rgba(255, 255, 255, 0.8), 0 0 20px rgba(255, 255, 255, 0.6);
+    }
+    100% {
+        text-shadow: 0 0 20px rgba(255, 255, 255, 0.8), 0 0 30px rgba(255, 255, 255, 0.6);
+    }
+}
+//----------------------------------------------------------------
+//----------------------------------------------------------------
+//index.html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LudoJS Tutorial</title>
+    <link rel="stylesheet" href="./ludo/style.css">
+</head>
+<body>
+    <div class="ludo-container">
+        <div class="ludo">
+            <div class="player-pieces">
+                <div class="player-piece" player-id="P1" piece="0"></div>
+                <div class="player-piece" player-id="P1" piece="1"></div>
+                <div class="player-piece" player-id="P1" piece="2"></div>
+                <div class="player-piece" player-id="P1" piece="3"></div>
+                
+                <div class="player-piece" player-id="P2" piece="0"></div>
+                <div class="player-piece" player-id="P2" piece="1"></div>
+                <div class="player-piece" player-id="P2" piece="2"></div>
+                <div class="player-piece" player-id="P2" piece="3"></div>
+            </div>
+
+            <div class="player-bases">
+                <div class="player-base" player-id="P1"></div>
+                <div class="player-base" player-id="P2"></div>
+            </div>
+        </div>
+        <div class="footer">
+            <div class="row">
+                <button id="dice-btn" class="btn btn-dice">Roll</button>
+                <div class="dice-value"></div>
+                <button id="reset-btn" class="btn btn-reset">Reset</button>
+            </div>
+            <h2 class="active-player">Active Player: <span></span> </h2>
+        </div>
+    </div>
+
+    <script src="./main.js" type="module"></script>
+</body>
+</html>

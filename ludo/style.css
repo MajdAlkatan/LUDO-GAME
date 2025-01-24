@@ -13,7 +13,7 @@
 
     height: 450px;
     width: 100%;
-    background-image: url('./ludo-bg1.jpg');
+    background-image: url('./ludo-bg3.jpg');
     background-size: contain;
     position: relative;
 }
@@ -62,7 +62,7 @@
 /* Highlighted piece with an interactive effect */
 .player-piece.highlight {
     cursor: pointer;
-    border: 2px dashed rgb(255, 255, 255); /* More subtle dashed border */
+    border: 2px dashed #ff7b00; /* More subtle dashed border */
     background: linear-gradient(145deg, #fffae3, #ffe09d); /* Lighter background to indicate selection */
     box-shadow: 0px 0px 20px rgba(0, 0, 0, 0.4), 0px 0px 25px rgba(255, 255, 0, 0.3); /* Brighter shadow on hover */
     animation: spin 1s infinite linear;
@@ -85,17 +85,17 @@
 
 /* Player 1 piece styling */
 [player-id="P1"].player-piece {
-    background-color: #ff0000; /* Light blue */
-    background: linear-gradient(145deg, #ff0202, #F50002); /* Gradient for more dimension */
-    box-shadow: 0px 6px 12px rgba(0, 0, 0, 0.3); /* Subtle shadow for depth */
+    background-color: #2eafff;
+    background: linear-gradient(145deg, #003cff, #2eafff); /* Gradient for more dimension */
+    box-shadow: 0px 6px 12px rgba(14, 1, 255, 0.69); /* Subtle shadow for depth */
 
 }
 
 /* Player 2 piece styling */
 [player-id="P2"].player-piece {
-    background-color: #ffea01; 
-    background: linear-gradient(145deg, #ffea01, #ffea01); /* Gradient for more dimension */
-    box-shadow: 0px 6px 12px rgb(255, 251, 1); /* Subtle shadow for depth */
+    background-color: #00b550;
+    background: linear-gradient(145deg, #00b550, #0cb500); /* Gradient for more dimension */
+    box-shadow: 0px 6px 12px rgb(1, 255, 86); /* Subtle shadow for depth */
 }
 
 
@@ -110,13 +110,13 @@
 .player-bases [player-id="P1"].player-base {
     bottom: 0;
     left: 0;
-    border-color: #F50002;
+    border-color: #2eafff;
 }
 
 .player-bases [player-id="P2"].player-base {
     top: 0;
     right: 0;
-    border-color: #FFD801;
+    border-color: #00b550;
 }
 
 .player-base.highlight {
