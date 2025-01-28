@@ -4,11 +4,17 @@ const diceButtonElement = document.querySelector('#dice-btn');
 const playerPiecesElements = {
     P1: document.querySelectorAll('[player-id="P1"].player-piece'),
     P2: document.querySelectorAll('[player-id="P2"].player-piece'),
+    P3: document.querySelectorAll('[player-id="P3"].player-piece'),
+    P4: document.querySelectorAll('[player-id="P4"].player-piece'),
 }
+
 
 export class UI {
     static listenDiceClick(callback) {
         diceButtonElement.addEventListener('click', callback);
+    }
+    static listenStartGame(callback) {
+        document.querySelector('#start-game').addEventListener('click', callback);
     }
 
     static listenResetClick(callback) {

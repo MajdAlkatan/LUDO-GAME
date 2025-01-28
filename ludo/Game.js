@@ -26,12 +26,14 @@ export class Game {
     _state;
 
 
-    constructor() {
-        this.board = new Board();
+    constructor(humanPlayers = 1, computerPlayers = 3) {
+        this.board = new Board(humanPlayers, computerPlayers);
         this.listenDiceClick();
         this.listenResetClick();
         this.listenPieceClick();
         this.resetGame();
+        this.playersOrder = [0, 2, 1, 3]; // Custom order: P1 (0), P3 (2), P2 (1), P4 (3)
+        this.currentTurnIndex = 0; // Start with the first player in the custom order
     }
 
 
@@ -475,9 +477,11 @@ export class Game {
 
 
     incrementTurn() {
-        this.turn = this.turn === 0 ? 1 : 0; // Switch turns
+        // Move to the next index in the custom order
+        this.currentTurnIndex = (this.currentTurnIndex + 1) % this.playersOrder.length; 
+        this.turn = this.playersOrder[this.currentTurnIndex]; // Get the current player's index based on the custom order
         this.state = STATE.DICE_NOT_ROLLED; // Reset state
-        console.log(`Turn changed! It's now player ${this.turn === 0 ? 'P1' : 'P2'}'s turn.`);
+        console.log(`Turn changed! It's now player P${this.turn + 1}'s turn.`); // Display current player
     }
 
 

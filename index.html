@@ -9,6 +9,17 @@
     <link rel="stylesheet" href="./ludo/style.css">
 </head>
 <body>
+    <div id="settings-menu">
+        <h2>Select Game Mode</h2>
+        <select id="game-mode">
+            <option value="1h3c">1 Human & 3 Computers</option>
+            <option value="2h2c">2 Humans & 2 Computers</option>
+            <option value="3h1c">3 Humans & 1 Computer</option>
+            <option value="4c">4 Computers</option>
+            <option value="4h">4 Humans</option>
+        </select>
+        <button id="start-game">Start Game</button>
+    </div>
     <div class="ludo-container">
         <div class="ludo">
             <div class="player-pieces">
@@ -23,11 +34,27 @@
                 <div class="player-piece" player-id="P2" piece="1" data-x="" data-y=""></div>
                 <div class="player-piece" player-id="P2" piece="2" data-x="" data-y=""></div>
                 <div class="player-piece" player-id="P2" piece="3" data-x="" data-y=""></div>
+                  <!-- P3 Pieces -->
+                  <div class="player-piece" player-id="P3" piece="0" data-x="" data-y=""></div>
+                  <div class="player-piece" player-id="P3" piece="1" data-x="" data-y=""></div>
+                  <div class="player-piece" player-id="P3" piece="2" data-x="" data-y=""></div>
+                  <div class="player-piece" player-id="P3" piece="3" data-x="" data-y=""></div>
+                  
+                  <!-- P4 Pieces -->
+                  <div class="player-piece" player-id="P4" piece="0" data-x="" data-y=""></div>
+                  <div class="player-piece" player-id="P4" piece="1" data-x="" data-y=""></div>
+                  <div class="player-piece" player-id="P4" piece="2" data-x="" data-y=""></div>
+                  <div class="player-piece" player-id="P4" piece="3" data-x="" data-y=""></div>
             </div>
 
             <div class="player-bases">
                 <div class="player-base" player-id="P1"></div>
+
                 <div class="player-base" player-id="P2"></div>
+
+                <div class="player-base" player-id="P3"></div>
+                
+                <div class="player-base" player-id="P4"></div>
             </div>
         </div>
         <div class="footer">

@@ -5,10 +5,12 @@ import { UI } from './UI.js';
 export class Board {
     players;
 
-    constructor() {
+    constructor(humanPlayers = 1, computerPlayers = 3) {
         this.players = {
-            P1: new Player('P1'),
-            P2: new Player('P2',true),
+            P1: new Player('P1', humanPlayers > 0 ? false : true),
+            P2: new Player('P2', humanPlayers > 1 ? false : true),
+            P3: new Player('P3', humanPlayers > 2 ? false : true),
+            P4: new Player('P4', humanPlayers > 3 ? false : true),
         };
     }
 
